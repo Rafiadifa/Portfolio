@@ -1,0 +1,255 @@
+
+<h2 class="sr-only">Canteen Smart Seating System — interactive prototype showing seat occupancy detection with pressure sensor simulation</h2>
+<style>
+  :root {
+    --green: #639922;
+    --green-bg: #EAF3DE;
+    --red: #A32D2D;
+    --red-bg: #FCEBEB;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --gray-bg: #F1EFE8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .wrap { padding: 1.5rem 0; }
+  .header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem; }
+  .title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+  .subtitle { font-size: 13px; color: var(--color-text-secondary); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .stat-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .stat-num { font-size: 22px; font-weight: 500; }
+  .stat-num.green { color: var(--green); }
+  .stat-num.red { color: var(--red); }
+  .stat-num.amber { color: var(--amber); }
+  .floor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 1.5rem; }
+  .table-cluster { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px; }
+  .cluster-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 10px; text-align: center; }
+  .seats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seat { border-radius: 8px; padding: 8px 6px; text-align: center; cursor: pointer; border: 1.5px solid transparent; transition: all 0.18s; user-select: none; position: relative; }
+  .seat:hover { opacity: 0.82; }
+  .seat:active { transform: scale(0.96); }
+  .seat.free { background: var(--green-bg); border-color: #C0DD97; }
+  .seat.occupied { background: var(--red-bg); border-color: #F7C1C1; }
+  .seat.bag { background: var(--amber-bg); border-color: #FAC775; }
+  .seat-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+  .seat-label { font-size: 10px; font-weight: 500; }
+  .seat.free .seat-label { color: #3B6D11; }
+  .seat.occupied .seat-label { color: #791F1F; }
+  .seat.bag .seat-label { color: #854F0B; }
+  .weight-badge { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+  .alert-panel { border-radius: var(--border-radius-lg); padding: 14px 16px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; }
+  .alert-panel.quiet { background: var(--green-bg); border: 0.5px solid #C0DD97; }
+  .alert-panel.warning { background: var(--amber-bg); border: 0.5px solid #FAC775; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .alert-icon { font-size: 22px; }
+  .alert-text { font-size: 13px; font-weight: 500; }
+  .alert-text.quiet { color: #3B6D11; }
+  .alert-text.warning { color: #854F0B; }
+  .controls { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px 16px; }
+  .ctrl-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 12px; }
+  .ctrl-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .ctrl-btn { font-size: 12px; padding: 6px 12px; border-radius: 6px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; transition: background 0.15s; }
+  .ctrl-btn:hover { background: var(--color-background-secondary); }
+  .ctrl-btn.danger { border-color: #F7C1C1; color: #A32D2D; }
+  .ctrl-btn.warn { border-color: #FAC775; color: #854F0B; }
+  .ctrl-btn.success { border-color: #C0DD97; color: #3B6D11; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .beep-flash { animation: beepFlash 0.35s; }
+  @keyframes beepFlash { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1)} }
+  .threshold-note { font-size: 12px; color: var(--color-text-secondary); margin-top: 8px; }
+</style>
+
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="title">Canteen Seating Monitor</div>
+      <div class="subtitle">Real-time pressure sensor occupancy detection</div>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-secondary);" id="clock">—</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Available seats</div><div class="stat-num green" id="stat-free">16</div></div>
+    <div class="stat"><div class="stat-label">Occupied (person)</div><div class="stat-num red" id="stat-occ">0</div></div>
+    <div class="stat"><div class="stat-label">Blocked by bag</div><div class="stat-num amber" id="stat-bag">0</div></div>
+  </div>
+
+  <div id="alert-panel" class="alert-panel quiet">
+    <i class="ti ti-circle-check alert-icon" style="color:#639922" aria-hidden="true"></i>
+    <span class="alert-text quiet" id="alert-msg">All clear — no bags blocking seats</span>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#639922"></div>Free</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#A32D2D"></div>Person (&gt;30 kg)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#BA7517"></div>Bag (&lt;30 kg)</div>
+  </div>
+
+  <div class="floor" id="floor"></div>
+
+  <div class="controls">
+    <div class="ctrl-title"><i class="ti ti-adjustments-horizontal" aria-hidden="true" style="margin-right:6px;font-size:14px;"></i>Simulate sensor input — click a seat above, or use quick actions:</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn warn" onclick="placeBagRandom()"><i class="ti ti-backpack" aria-hidden="true"></i> Place bag on random free seat</button>
+      <button class="ctrl-btn danger" onclick="sitPersonRandom()"><i class="ti ti-user" aria-hidden="true"></i> Person sits on random free seat</button>
+      <button class="ctrl-btn success" onclick="clearRandom()"><i class="ti ti-armchair" aria-hidden="true"></i> Free a random seat</button>
+      <button class="ctrl-btn" onclick="resetAll()"><i class="ti ti-refresh" aria-hidden="true"></i> Reset all</button>
+    </div>
+    <div class="threshold-note">Threshold: &lt;30 kg → bag alert (beep) &nbsp;|&nbsp; ≥30 kg → person detected (seat marked occupied)</div>
+  </div>
+</div>
+
+<script>
+const TABLES = 4, SEATS_PER = 4;
+const state = [];
+for(let t=0;t<TABLES;t++){
+  state.push([]);
+  for(let s=0;s<SEATS_PER;s++){
+    state[t].push({status:'free', weight:0});
+  }
+}
+
+const tableNames = ['Table A','Table B','Table C','Table D'];
+const seatLabels = ['A1','A2','B1','B2'];
+
+function seatIcon(s){
+  if(s.status==='free') return '🪑';
+  if(s.status==='occupied') return '🧑';
+  return '🎒';
+}
+
+function seatWeightLabel(s){
+  if(s.status==='free') return '0 kg';
+  if(s.status==='occupied') return s.weight+'kg';
+  return s.weight+'kg';
+}
+
+let beepTimeout = null;
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<3;i++){
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=880;
+      g.gain.setValueAtTime(0.18,ctx.currentTime+i*0.22);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.22+0.18);
+      o.start(ctx.currentTime+i*0.22);
+      o.stop(ctx.currentTime+i*0.22+0.2);
+    }
+  }catch(e){}
+}
+
+function render(){
+  const floor = document.getElementById('floor');
+  floor.innerHTML='';
+  let free=0,occ=0,bag=0;
+  for(let t=0;t<TABLES;t++){
+    const cluster=document.createElement('div');
+    cluster.className='table-cluster';
+    cluster.innerHTML=`<div class="cluster-label">${tableNames[t]}</div><div class="seats-grid" id="tbl-${t}"></div>`;
+    floor.appendChild(cluster);
+    const grid=cluster.querySelector('.seats-grid');
+    for(let s=0;s<SEATS_PER;s++){
+      const seat=state[t][s];
+      const div=document.createElement('div');
+      div.className='seat '+seat.status;
+      div.id=`seat-${t}-${s}`;
+      div.innerHTML=`<span class="seat-icon">${seatIcon(seat)}</span><span class="seat-label">${seat.status==='free'?'Free':seat.status==='occupied'?'Occupied':'Bag!'}</span><span class="weight-badge">${seatWeightLabel(seat)}</span>`;
+      div.onclick=()=>cycleSeat(t,s);
+      div.title='Click to cycle: free → bag → person → free';
+      grid.appendChild(div);
+      if(seat.status==='free')free++;
+      else if(seat.status==='occupied')occ++;
+      else bag++;
+    }
+  }
+  document.getElementById('stat-free').textContent=free;
+  document.getElementById('stat-occ').textContent=occ;
+  document.getElementById('stat-bag').textContent=bag;
+  const panel=document.getElementById('alert-panel');
+  const msg=document.getElementById('alert-msg');
+  const icon=panel.querySelector('i');
+  if(bag>0){
+    panel.className='alert-panel warning';
+    msg.className='alert-text warning';
+    msg.textContent=`⚠ ${bag} seat${bag>1?'s':''} blocked by bag${bag>1?'s':''} — weight below 30 kg detected. Please remove bag!`;
+    icon.className='ti ti-alert-triangle alert-icon';
+    icon.style.color='#854F0B';
+  } else {
+    panel.className='alert-panel quiet';
+    msg.className='alert-text quiet';
+    msg.textContent='All clear — no bags blocking seats';
+    icon.className='ti ti-circle-check alert-icon';
+    icon.style.color='#639922';
+  }
+}
+
+function cycleSeat(t,s){
+  const seat=state[t][s];
+  const el=document.getElementById(`seat-${t}-${s}`);
+  if(seat.status==='free'){
+    seat.status='bag';
+    seat.weight=Math.floor(Math.random()*12)+2;
+    beep();
+    if(el){el.classList.add('beep-flash');setTimeout(()=>el.classList.remove('beep-flash'),400);}
+  } else if(seat.status==='bag'){
+    seat.status='occupied';
+    seat.weight=Math.floor(Math.random()*40)+55;
+  } else {
+    seat.status='free';
+    seat.weight=0;
+  }
+  render();
+}
+
+function placeBagRandom(){
+  const free=[];
+  for(let t=0;t<TABLES;t++)for(let s=0;s<SEATS_PER;s++) if(state[t][s].status==='free') free.push([t,s]);
+  if(!free.length) return;
+  const [t,s]=free[Math.floor(Math.random()*free.length)];
+  state[t][s].status='bag';
+  state[t][s].weight=Math.floor(Math.random()*12)+2;
+  beep();
+  render();
+  const el=document.getElementById(`seat-${t}-${s}`);
+  if(el){el.classList.add('beep-flash');setTimeout(()=>el.classList.remove('beep-flash'),400);}
+}
+
+function sitPersonRandom(){
+  const free=[];
+  for(let t=0;t<TABLES;t++)for(let s=0;s<SEATS_PER;s++) if(state[t][s].status==='free') free.push([t,s]);
+  if(!free.length) return;
+  const [t,s]=free[Math.floor(Math.random()*free.length)];
+  state[t][s].status='occupied';
+  state[t][s].weight=Math.floor(Math.random()*40)+55;
+  render();
+}
+
+function clearRandom(){
+  const taken=[];
+  for(let t=0;t<TABLES;t++)for(let s=0;s<SEATS_PER;s++) if(state[t][s].status!=='free') taken.push([t,s]);
+  if(!taken.length) return;
+  const [t,s]=taken[Math.floor(Math.random()*taken.length)];
+  state[t][s].status='free';
+  state[t][s].weight=0;
+  render();
+}
+
+function resetAll(){
+  for(let t=0;t<TABLES;t++)for(let s=0;s<SEATS_PER;s++){state[t][s].status='free';state[t][s].weight=0;}
+  render();
+}
+
+function tick(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(tick,1000); tick();
+render();
+</script>
