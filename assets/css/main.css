@@ -351,6 +351,16 @@ a.btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
 .version .vhead .state { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--faint); }
 .version.current .vhead .state { color: var(--accent); border-color: rgba(177, 95, 214, 0.32); }
 
+/* character / logo images that should show whole, not crop */
+.thumb.contain { background: #0d1018; }
+.thumb.contain img { object-fit: contain; padding: 16px; }
+.gallery .tile.contain { background: #0d1018; }
+.gallery .tile.contain img { object-fit: contain; padding: 14px; }
+.gallery .tile.tall { aspect-ratio: 3 / 4; }
+.gallery .tile video { width: 100%; height: 100%; object-fit: contain; display: block; background: #0d1018; }
+.feature-img { max-width: 340px; margin-top: 16px; border: 1px solid var(--border); border-radius: 16px; background: #0d1018; padding: 18px; }
+.feature-img img { width: 100%; display: block; }
+
 @media (max-width: 600px) {
   .gallery .tile.wide { grid-column: span 1; aspect-ratio: 4 / 3; }
 }
