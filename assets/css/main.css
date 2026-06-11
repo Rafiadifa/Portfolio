@@ -361,6 +361,15 @@ a.btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
 .feature-img { max-width: 340px; margin-top: 16px; border: 1px solid var(--border); border-radius: 16px; background: #0d1018; padding: 18px; }
 .feature-img img { width: 100%; display: block; }
 
+/* pull-quote (lyrics, statements) */
+blockquote.quote { margin: 6px 0 20px; padding: 16px 22px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 12px 12px 0; }
+blockquote.quote p { margin: 0; font-size: 19px; line-height: 1.5; font-style: italic; color: var(--text); }
+blockquote.quote cite { display: block; margin-top: 10px; font-style: normal; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--accent); }
+
+/* award / highlight pill */
+.award { display: inline-flex; align-items: center; gap: 9px; margin-top: 22px; padding: 9px 16px; border: 1px solid rgba(177, 95, 214, 0.32); border-radius: 999px; background: var(--surface); font-size: 13.5px; color: #e9c8f7; }
+.award .star { color: var(--accent); font-size: 15px; }
+
 @media (max-width: 600px) {
   .gallery .tile.wide { grid-column: span 1; aspect-ratio: 4 / 3; }
 }
