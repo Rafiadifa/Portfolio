@@ -366,6 +366,13 @@ blockquote.quote { margin: 6px 0 20px; padding: 16px 22px; border-left: 3px soli
 blockquote.quote p { margin: 0; font-size: 19px; line-height: 1.5; font-style: italic; color: var(--text); }
 blockquote.quote cite { display: block; margin-top: 10px; font-style: normal; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--accent); }
 
+/* about layout */
+.about-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 36px; align-items: start; }
+.about-grid .portrait { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: #0d1018; }
+.about-grid .portrait img { width: 100%; display: block; }
+.about-grid .gallery { grid-template-columns: 1fr 1fr; }
+@media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; gap: 24px; } }
+
 /* award / highlight pill */
 .award { display: inline-flex; align-items: center; gap: 9px; margin-top: 22px; padding: 9px 16px; border: 1px solid rgba(177, 95, 214, 0.32); border-radius: 999px; background: var(--surface); font-size: 13.5px; color: #e9c8f7; }
 .award .star { color: var(--accent); font-size: 15px; }
