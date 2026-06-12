@@ -62,7 +62,10 @@
     /* =============================================
        HEADER
     ============================================= */
-    .header { text-align: center; margin-bottom: 28px; }
+    .header { text-align: center; margin-bottom: 28px; display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap; }
+    .header-qr { display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; }
+    .header-qr img { width: 108px; height: 108px; display: block; background: #fff; border: 1px solid #E6E6E6; border-radius: 12px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+    .header-qr figcaption { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
     .header-eyebrow {
       font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--text-muted); margin-bottom: 10px;
@@ -404,13 +407,19 @@
 
   <!-- HEADER -->
   <header class="header fade-up">
-    <p class="header-eyebrow">Design Thinking Prototype · Canteen UX</p>
-    <h1 class="header-title">Qingfen Canteen Live Seating Map</h1>
-    <p class="header-subtitle">Making seat availability visible</p>
-    <div class="live-bar">
-      <span class="live-badge"><span class="live-dot"></span> Live</span>
-      <span class="clock" id="clock">— · <strong id="clock-time">--:--:--</strong></span>
+    <div class="header-main">
+      <p class="header-eyebrow">Design Thinking Prototype · Canteen UX</p>
+      <h1 class="header-title">Qingfen Canteen Live Seating Map</h1>
+      <p class="header-subtitle">Making seat availability visible</p>
+      <div class="live-bar">
+        <span class="live-badge"><span class="live-dot"></span> Live</span>
+        <span class="clock" id="clock">— · <strong id="clock-time">--:--:--</strong></span>
+      </div>
     </div>
+    <figure class="header-qr">
+      <img src="../img/qr-canteen.png" alt="Scan to open the live seating map on your phone" />
+      <figcaption>Scan to open</figcaption>
+    </figure>
   </header>
 
   <!-- INSIGHT BANNER -->
