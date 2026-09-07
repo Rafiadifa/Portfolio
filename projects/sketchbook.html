@@ -3,12 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sketchbook — Traditional Art · Rafi</title>
-  <meta name="description" content="Rafi's sketchbook — pencil and colored-pencil portraits of friends and admired faces. The hand-drawn, personal side of the portfolio." />
+  <title>Sketchbook &mdash; Rafi</title>
+  <meta name="description" content="Rafi's sketchbook: a swipeable digital book of pencil and colored-pencil drawings." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    .sketch-wrap { position: relative; z-index: 1; padding: 34px 0 20px; }
+    .book-hint { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
+    .sketch-stage { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+    #book { margin: 0 auto; touch-action: pan-y; }
+    #book .page { background: #f5f1e8; color: #2a2622; }
+    .leaf { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 22px 22px 18px; box-sizing: border-box;
+            background: #f5f1e8;
+            background-image: linear-gradient(rgba(120,110,90,0.06) 1px, transparent 1px);
+            background-size: 100% 30px; }
+    .leaf .art { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+    .leaf .art img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 18px rgba(0,0,0,0.18); border: 3px solid #fff; }
+    .leaf .cap { margin-top: 12px; text-align: center; }
+    .leaf .cap .t { display: block; font-family: "Caveat", var(--sans); font-size: 25px; font-weight: 600; color: #24201c; line-height: 1.1; }
+    .leaf .cap .m { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase; color: #8a8072; margin-top: 5px; }
+    .leaf .folio { position: absolute; bottom: 10px; right: 16px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #b3a892; }
+    .page-cover { background: linear-gradient(135deg, #3a1f47, #24122e) !important; color: #f0e6f5 !important; }
+    .cover-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; box-sizing: border-box; }
+    .cover-eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.3em; color: #c79ad8; }
+    .cover-title { font-family: "Caveat", var(--sans); font-size: 54px; margin: 8px 0 14px; color: #fff; }
+    .cover-sub { font-size: 13.5px; color: #d9c9e2; max-width: 240px; line-height: 1.5; }
+    .cover-link { margin-top: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: #e6c8f5; border: 1px solid rgba(230,200,245,0.4); border-radius: 999px; padding: 8px 16px; }
+    .book-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 26px auto 0; }
+    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; transition: transform .12s, border-color .15s, background .15s; }
+    .book-controls button.turn:hover { border-color: var(--accent-2); background: var(--surface-2); transform: translateY(-2px); }
+    .book-controls button.turn:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .book-controls .counter { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); min-width: 180px; text-align: center; }
+    .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px auto 0; max-width: 640px; }
+    .chip-jump { font-size: 12.5px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
+    .chip-jump:hover, .chip-jump.on { color: var(--text); border-color: var(--accent-2); }
+    #book.plain { position: static !important; width: 100% !important; height: auto !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; transform: none !important; perspective: none !important; }
+    #book.plain .page { position: relative !important; display: block !important; width: auto !important; height: auto !important; aspect-ratio: 3/4; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transform: none !important; }
+    #book.plain .page-cover { display: none !important; }
+    @media (max-width: 640px) {
+      .cover-title { font-size: 40px; }
+      .leaf .cap .t { font-size: 21px; }
+    }
+  </style>
 </head>
 <body>
 
@@ -21,15 +59,17 @@
         <li class="has-dropdown">
           <button class="menu-trigger">Architecture <i class="caret"></i></button>
           <div class="dropdown">
-            <a href="design-thinking.html">Design Thinking — Qingfen Canteen<span class="tag">2026</span><small>Re-imagining seat availability at peak hours</small></a>
-            <a href="lotus-mirage.html">The Lotus Mirage<span class="tag">VR</span><small>A VR pavilion — a beautiful, hollow shell</small></a>
+            <a href="design-thinking.html">Design Thinking &middot; Qingfen Canteen<span class="tag">2026</span><small>Rethinking seat availability at busy times</small></a>
+            <a href="lotus-mirage.html">The Lotus Mirage<span class="tag">VR</span><small>A glass pavilion that turns out hollow</small></a>
           </div>
         </li>
         <li class="has-dropdown">
           <button class="menu-trigger">Design <i class="caret"></i></button>
           <div class="dropdown">
-            <a href="steamy.html">Steamy — Zijing Mascot<span class="tag">Mascot</span><small>1st-place college mascot</small></a>
-            <a href="pottery.html">Blue Valentine — Pottery<span class="tag">Craft</span><small>Hand-built ceramic rose</small></a>
+            <a href="steamy.html">Steamy &middot; Zijing Mascot<span class="tag">Mascot</span><small>1st-place college mascot</small></a>
+            <a href="pottery.html">Blue Valentine &middot; Pottery<span class="tag">Craft</span><small>Hand-built ceramic rose</small></a>
+            <a href="lab-poster.html">Lab Danger Poster<span class="tag">Poster</span><small>Concept and line art</small></a>
+            <a href="xiumi.html">Uzbekistan Deep Dive<span class="tag">WeChat</span><small>Xiumi article design</small></a>
           </div>
         </li>
         <li><a href="sketchbook.html" class="active">Sketchbook</a></li>
@@ -42,49 +82,384 @@
   <header class="proj-hero">
     <div class="wrap">
       <div class="crumbs"><a href="../index.html">Home</a> / Sketchbook</div>
-      <span class="eyebrow">Personal · Traditional Art</span>
+      <span class="eyebrow">Personal &middot; Traditional Art</span>
       <h1>Sketchbook</h1>
       <p class="sub">
-        The hand-drawn side of things — pencil and colored-pencil portraits made
-        outside the studio. Some are gifts for friends; others are faces I admire,
-        drawn just for the practice and the love of it.
+        My drawings, kept the way I like to look at them: as a book you flip through.
+        Pencil and colored-pencil work from over the years, sorted into friends,
+        K-pop, game characters, and my own illustrations.
       </p>
     </div>
   </header>
 
-  <!-- ===== Friends ===== -->
-  <section class="section" style="padding-top:40px">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div>
-          <span class="eyebrow">For Friends</span>
-          <h2>Portraits of people I know</h2>
-        </div>
-        <p>Drawings made for friends — usually as a gift.</p>
-      </div>
-      <div class="gallery reveal">
-        <a class="tile tall" href="../assets/img/sketchbook/friend-01.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/friend-01.jpg" alt="Pencil portrait of a friend" loading="lazy" /></a>
-        <a class="tile tall" href="../assets/img/sketchbook/friend-02.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/friend-02.jpg" alt="Colored-pencil portrait of a friend" loading="lazy" /></a>
+  <!-- ===== The book ===== -->
+  <section class="sketch-wrap">
+    <div class="book-hint">Drag a page or use the arrows</div>
+    <div class="sketch-stage">
+      <div id="book">
+    <div class="page page-cover page-cover-top" data-density="hard">
+      <div class="cover-inner">
+        <div class="cover-eyebrow">RAFI</div>
+        <h2 class="cover-title">Sketchbook</h2>
+        <p class="cover-sub">Drawings by hand. Swipe or use the arrows to turn the pages.</p>
       </div>
     </div>
-  </section>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2019-2022_anggia_coloredpencil.jpg" alt="Portrait, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2022_senior_coloredpencil.jpg" alt="Portrait, colored pencil (2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">colored pencil &middot; 2022</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2025_atika_pencil.jpg" alt="Portrait, pencil (2025)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">pencil &middot; 2025</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2025_jethro_pencil.jpg" alt="Portrait, pencil (2025)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">pencil &middot; 2025</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2025_sarah_pencil.jpg" alt="Portrait, pencil (2025)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">pencil &middot; 2025</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Friends &amp; Family">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/friends-and-family/2026_chintya_coloredpencil.jpg" alt="Portrait, colored pencil (2026)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Portrait</span><span class="m">colored pencil &middot; 2026</span></div>
+        <span class="folio">Friends &amp; Family</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_irene-red-velvet_pencil.jpg" alt="Irene RED VELVET, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Irene RED VELVET</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_karina-aespa_coloredpencil.jpg" alt="Karina AESPA, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Karina AESPA</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_taehyung_coloredpencil.jpg" alt="Taehyung, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Taehyung</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_winter-aespa_pencil.jpg" alt="Winter AESPA, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Winter AESPA</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_yuna-itzy_coloredpencil.jpg" alt="Yuna ITZY, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Yuna ITZY</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2019-2022_yuna-itzy_pencil.jpg" alt="Yuna ITZY, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Yuna ITZY</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2020_rose-blackpink_coloredpencil.jpg" alt="Rose BLACKPINK, colored pencil (2020)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Rose BLACKPINK</span><span class="m">colored pencil &middot; 2020</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2020_tzuyu-twice_acrylic.jpg" alt="Tzuyu TWICE, acrylic (2020)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Tzuyu TWICE</span><span class="m">acrylic &middot; 2020</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2023_dahyun-twice_coloredpencil.jpg" alt="Dahyun TWICE, colored pencil (2022-2023)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Dahyun TWICE</span><span class="m">colored pencil &middot; 2022-2023</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2024_karina-aespa_coloredpencil.jpg" alt="Karina AESPA, colored pencil (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Karina AESPA</span><span class="m">colored pencil &middot; 2022-2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2024_sieun_pencil.jpg" alt="Sieun, pencil (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Sieun</span><span class="m">pencil &middot; 2022-2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2024_sullyoon-nmixx_watercolor.jpg" alt="Sullyoon NMIXX, watercolor (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Sullyoon NMIXX</span><span class="m">watercolor &middot; 2022-2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2024_umji-gfriend-viviz_pencil.jpg" alt="Umji GFRIEND VIVIZ, pencil (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Umji GFRIEND VIVIZ</span><span class="m">pencil &middot; 2022-2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2022-2024_wonyoung-ive_watercolor-pen.jpg" alt="Wonyoung IVE, watercolor pen (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Wonyoung IVE</span><span class="m">watercolor pen &middot; 2022-2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2023_lia-itzy_pencil_bilqis-side.jpg" alt="Lia ITZY, pencil (2023)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Lia ITZY</span><span class="m">pencil &middot; 2023 &middot; Bilqis Side</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2023_lia-itzy_pencil_full.jpg" alt="Lia ITZY, pencil (2023)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Lia ITZY</span><span class="m">pencil &middot; 2023 &middot; Full</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2023_lia-itzy_pencil_rafi-side.jpg" alt="Lia ITZY, pencil (2023)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Lia ITZY</span><span class="m">pencil &middot; 2023 &middot; Rafi Side</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="K-pop">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/k-pop/2024_gaeul-ive_pencil.jpg" alt="Gaeul IVE, pencil (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Gaeul IVE</span><span class="m">pencil &middot; 2024</span></div>
+        <span class="folio">K-pop</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Game Characters">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/game-characters/2019-2022_kadita-mobile-legends_pencil.jpg" alt="Kadita Mobile Legends, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Kadita Mobile Legends</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Game Characters</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Game Characters">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/game-characters/2019-2022_lunox-mobile-legends_coloredpencil-acrylic.jpg" alt="Lunox Mobile Legends, colored pencil &amp; acrylic (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Lunox Mobile Legends</span><span class="m">colored pencil & acrylic &middot; 2019-2022</span></div>
+        <span class="folio">Game Characters</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Game Characters">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/game-characters/2019-2022_video-game-character_pencil.jpg" alt="Video Game Character, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Video Game Character</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Game Characters</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_comic-panel_pencil.jpg" alt="Comic Panel, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Comic Panel</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_fairy-queen_pencil.jpg" alt="Fairy Queen, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Fairy Queen</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_fairy_watercolor.jpg" alt="Fairy, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Fairy</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_greek-goddess_pencil.jpg" alt="Greek Goddess, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Greek Goddess</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_moon-goddess_watercolor.jpg" alt="Moon Goddess, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Moon Goddess</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_musa-winx_watercolor.jpg" alt="Musa WINX, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Musa WINX</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_noble-lady_coloredpencil.jpg" alt="Noble Lady, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Noble Lady</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_orange_watercolor.jpg" alt="Orange, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Orange</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_picnic_watercolor.jpg" alt="Picnic, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Picnic</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_sea-goddess_watercolor.jpg" alt="Sea Goddess, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Sea Goddess</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_shy-girl_watercolor.jpg" alt="Shy Girl, watercolor (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Shy Girl</span><span class="m">watercolor &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_through-the-season-change_coloredpencil.jpg" alt="Through the Season Change, colored pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Through the Season Change</span><span class="m">colored pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2019-2022_wedding-day_pencil.jpg" alt="Wedding Day, pencil (2019-2022)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Wedding Day</span><span class="m">pencil &middot; 2019-2022</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2022-2024_pinterest-girl-2_watercolor.jpg" alt="Pinterest Girl 2, watercolor (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Pinterest Girl 2</span><span class="m">watercolor &middot; 2022-2024</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2022-2024_under-the-moonlight_pencil.jpg" alt="Under the Moonlight, pencil (2022-2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Under the Moonlight</span><span class="m">pencil &middot; 2022-2024</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2023_pinterest-girl_pen.jpg" alt="Pinterest Girl, pen (2023)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Pinterest Girl</span><span class="m">pen &middot; 2023</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2024_rainy-day_gouache.jpg" alt="Rainy Day, gouache (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Rainy Day</span><span class="m">gouache &middot; 2024</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2024_the-greatest-showman_pen_back.jpg" alt="The Greatest Showman, pen (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">The Greatest Showman</span><span class="m">pen &middot; 2024 &middot; Back</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2024_the-greatest-showman_pen_front.jpg" alt="The Greatest Showman, pen (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">The Greatest Showman</span><span class="m">pen &middot; 2024 &middot; Front</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2024_warrior_pen.jpg" alt="Warrior, pen (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Warrior</span><span class="m">pen &middot; 2024</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page" data-cat="Illustration">
+      <div class="leaf">
+        <div class="art"><img src="../assets/img/sketchbook/illustration/2024_wild-hair_pencil.jpg" alt="Wild Hair, pencil (2024)" loading="lazy" /></div>
+        <div class="cap"><span class="t">Wild Hair</span><span class="m">pencil &middot; 2024</span></div>
+        <span class="folio">Illustration</span>
+      </div>
+    </div>
+    <div class="page page-cover page-cover-end" data-density="hard">
+      <div class="cover-inner">
+        <p class="cover-sub">That's the sketchbook, for now.</p>
+        <a class="cover-link" href="../index.html#sketchbook">Back to the site</a>
+      </div>
+    </div>
+      </div>
+    </div>
 
-  <!-- ===== Famous faces ===== -->
-  <section class="section" style="padding-top:0">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div>
-          <span class="eyebrow">Faces I Admire</span>
-          <h2>Studies of famous faces</h2>
-        </div>
-        <p>Older studies — drawn from reference, just for practice.</p>
-      </div>
-      <div class="gallery reveal">
-        <a class="tile tall" href="../assets/img/sketchbook/karina.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/karina.jpg" alt="Colored-pencil portrait — Karina (aespa), 2022" loading="lazy" /></a>
-        <a class="tile tall" href="../assets/img/sketchbook/rose.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/rose.jpg" alt="Colored-pencil portrait — Rosé, 2020" loading="lazy" /></a>
-        <a class="tile tall" href="../assets/img/sketchbook/tzuyu.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/tzuyu.jpg" alt="Painted portrait — Tzuyu, 2020" loading="lazy" /></a>
-        <a class="tile tall" href="../assets/img/sketchbook/lunox.jpg" target="_blank" rel="noopener"><img src="../assets/img/sketchbook/lunox.jpg" alt="Painting — Lunox, Mobile Legends, 2020" loading="lazy" /></a>
-      </div>
+    <div class="book-controls">
+      <button class="turn" id="prev" aria-label="Previous page">&lsaquo;</button>
+      <span class="counter" id="counter">Cover</span>
+      <button class="turn" id="next" aria-label="Next page">&rsaquo;</button>
+    </div>
+
+    <div class="chips">
+        <button class="chip-jump" data-slug="friends-and-family">Friends & Family</button>
+        <button class="chip-jump" data-slug="k-pop">K-pop</button>
+        <button class="chip-jump" data-slug="game-characters">Game Characters</button>
+        <button class="chip-jump" data-slug="illustration">Illustration</button>
     </div>
   </section>
 
@@ -92,10 +467,83 @@
   <footer class="footer">
     <div class="wrap">
       <a class="brand" href="../index.html"><b>Rafi</b> <span>// PORTFOLIO</span></a>
-      <span class="small">Sketchbook — pencil &amp; colored pencil</span>
+      <span class="small">Sketchbook &middot; pencil &amp; colored pencil</span>
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
   <script src="../assets/js/main.js"></script>
+  <script>
+    (function () {
+      var el = document.getElementById('book');
+      var pages = el.querySelectorAll('.page');
+      var total = pages.length;
+      var catStart = {"friends-and-family": 1, "k-pop": 7, "game-characters": 25, "illustration": 28};
+      var counter = document.getElementById('counter');
+      var prev = document.getElementById('prev');
+      var next = document.getElementById('next');
+      var chips = Array.prototype.slice.call(document.querySelectorAll('.chip-jump'));
+      var slugs = Object.keys(catStart);
+
+      function nextStart(slug) {
+        var vals = slugs.map(function (s) { return catStart[s]; }).sort(function (a, b) { return a - b; });
+        var mine = catStart[slug];
+        for (var k = 0; k < vals.length; k++) { if (vals[k] > mine) return vals[k]; }
+        return total - 1;
+      }
+      function labelFor(i) {
+        if (i <= 0) return 'Cover';
+        if (i >= total - 1) return 'End';
+        var cat = pages[i] ? pages[i].getAttribute('data-cat') : '';
+        return (cat ? cat + ' · ' : '') + 'page ' + i + ' / ' + (total - 2);
+      }
+
+      if (window.St && St.PageFlip) {
+        var pf = new St.PageFlip(el, {
+          width: 460, height: 620, size: 'stretch',
+          minWidth: 280, maxWidth: 560, minHeight: 360, maxHeight: 760,
+          maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: false, useMouseEvents: true, flippingTime: 700
+        });
+        pf.loadFromHTML(pages);
+        document.body.classList.add('book-ready');
+        function update() {
+          var i = pf.getCurrentPageIndex();
+          counter.textContent = labelFor(i);
+          prev.disabled = (i <= 0);
+          next.disabled = (i >= total - 1);
+          chips.forEach(function (c) {
+            var s = c.getAttribute('data-slug');
+            c.classList.toggle('on', typeof catStart[s] === 'number' && i >= catStart[s] && i < nextStart(s));
+          });
+        }
+        pf.on('flip', update);
+        prev.addEventListener('click', function () { pf.flipPrev(); });
+        next.addEventListener('click', function () { pf.flipNext(); });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowLeft') pf.flipPrev();
+          if (e.key === 'ArrowRight') pf.flipNext();
+        });
+        chips.forEach(function (c) {
+          c.addEventListener('click', function () {
+            var s = c.getAttribute('data-slug');
+            if (typeof catStart[s] === 'number') pf.flip(catStart[s]);
+          });
+        });
+        update();
+        window.addEventListener('resize', function () { try { pf.update(); } catch (e) {} });
+      } else {
+        el.classList.add('plain');
+        document.querySelector('.book-controls').style.display = 'none';
+        document.querySelector('.book-hint').textContent = 'Browse the drawings';
+        chips.forEach(function (c) {
+          c.addEventListener('click', function () {
+            var s = c.getAttribute('data-slug');
+            var start = catStart[s];
+            if (typeof start === 'number' && pages[start]) pages[start].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
