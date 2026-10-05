@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uzbekistan Magazine · Rafi</title>
+  <meta name="description" content="Marga Sutra, the printed Uzbekistan deep-dive magazine for Zijing College. Flip through it like a book." />
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../assets/favicon.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Rafi · Portfolio" />
+  <meta property="og:title" content="Uzbekistan Magazine · Rafi" />
+  <meta property="og:description" content="Marga Sutra, the printed Uzbekistan deep-dive magazine for Zijing College. Flip through it like a book." />
+  <meta property="og:url" content="https://rafiadifa.github.io/Portfolio/projects/magazine.html" />
+  <meta property="og:image" content="https://rafiadifa.github.io/Portfolio/assets/img/og-cover.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Uzbekistan Magazine · Rafi" />
+  <meta name="twitter:description" content="Marga Sutra, the printed Uzbekistan deep-dive magazine for Zijing College. Flip through it like a book." />
+  <meta name="twitter:image" content="https://rafiadifa.github.io/Portfolio/assets/img/og-cover.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <style>
+    .mag-wrap { position: relative; z-index: 1; padding: 34px 0 20px; }
+    .book-hint { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
+    .mag-stage { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+    #book { margin: 0 auto; touch-action: pan-y; }
+    #book .page { background: #faf6ef; color: #2a2622; }
+
+    /* full-bleed cover pages */
+    .page-cover { background: #24122e !important; }
+    .page-cover .cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* interior leaves */
+    .mag-leaf { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                text-align: center; padding: 38px 32px; box-sizing: border-box;
+                background: #faf6ef; background-image: radial-gradient(rgba(120,90,140,0.05), transparent 70%); }
+    .mag-leaf .eyebrow2 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: #9a6fb0; }
+    .mag-leaf .ttl { font-family: "Playfair Display", serif; font-weight: 600; font-size: 34px; line-height: 1.1; color: #2a2030; margin: 14px 0 4px; }
+    .mag-leaf .cn { font-family: "Playfair Display", serif; font-size: 18px; color: #6b4a82; margin-bottom: 18px; }
+    .mag-leaf .rule { width: 46px; height: 2px; background: #c3a7d4; margin: 10px auto 16px; }
+    .mag-leaf .ln { font-size: 13.5px; color: #4a4450; line-height: 1.7; }
+    .mag-leaf .ln.small { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; color: #8a7e96; margin-top: 4px; }
+    .mag-leaf .folio { position: absolute; bottom: 12px; left: 0; right: 0; font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: #bbaecb; }
+
+    /* placeholder leaves */
+    .mag-leaf.soon .mark { font-family: "Playfair Display", serif; font-size: 40px; color: #d8c6e4; line-height: 1; }
+    .mag-leaf.soon .ln { margin-top: 14px; color: #8a7e96; }
+
+    .book-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 26px auto 0; }
+    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; transition: transform .12s, border-color .15s, background .15s; }
+    .book-controls button.turn:hover { border-color: var(--accent-2); background: var(--surface-2); transform: translateY(-2px); }
+    .book-controls button.turn:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .book-controls .counter { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); min-width: 170px; text-align: center; }
+
+    .mag-note { max-width: 560px; margin: 24px auto 0; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+    #book.plain { position: static !important; width: 100% !important; height: auto !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; transform: none !important; perspective: none !important; }
+    #book.plain .page { position: relative !important; display: block !important; width: auto !important; height: auto !important; aspect-ratio: 1060/1500; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transform: none !important; }
+
+    @media (max-width: 640px) {
+      .mag-leaf .ttl { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Nav ===== -->
+  <nav class="nav">
+    <div class="wrap">
+      <a class="brand" href="../index.html"><b>Rafi</b> <span>// PORTFOLIO</span></a>
+      <button class="nav-toggle" aria-label="Menu"><span></span></button>
+      <ul class="menu">
+        <li class="has-dropdown">
+          <button class="menu-trigger">Architecture <i class="caret"></i></button>
+          <div class="dropdown">
+            <a href="design-thinking.html">Design Thinking &middot; Qingfen Canteen<span class="tag">2026</span><small>Rethinking seat availability at busy times</small></a>
+            <a href="lotus-mirage.html">The Lotus Mirage<span class="tag">VR</span><small>A glass pavilion that turns out hollow</small></a>
+            <a href="langyuan.html">Langyuan Station<span class="tag">2026</span><small>Conviviality: movement &amp; perception</small></a>
+          </div>
+        </li>
+        <li class="has-dropdown">
+          <button class="menu-trigger">Design <i class="caret"></i></button>
+          <div class="dropdown">
+            <a href="steamy.html">Steamy &middot; Zijing Mascot<span class="tag">Mascot</span><small>1st-place college mascot</small></a>
+            <a href="pottery.html">Blue Valentine &middot; Pottery<span class="tag">Craft</span><small>Hand-built ceramic rose</small></a>
+            <a href="lab-poster.html">Lab Danger Poster<span class="tag">Poster</span><small>Concept and line art</small></a>
+            <a href="xiumi.html">Uzbekistan Deep Dive<span class="tag">WeChat</span><small>Xiumi article design</small></a>
+            <a href="magazine.html">Uzbekistan Magazine<span class="tag">Book</span><small>Marga Sutra, flip through it</small></a>
+          </div>
+        </li>
+        <li><a href="sketchbook.html">Sketchbook</a></li>
+        <li><a href="../index.html#about">About</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <header class="proj-hero">
+    <div class="wrap">
+      <div class="crumbs"><a href="../index.html">Home</a> / <a href="../index.html#design">Design</a> / <a href="xiumi.html">Uzbekistan Deep Dive</a> / Magazine</div>
+      <span class="eyebrow">Design · Editorial / Magazine</span>
+      <h1>The Magazine</h1>
+      <p class="sub">
+        <em>Marga Sutra</em>, the printed magazine from Zijing College's Uzbekistan deep dive.
+        I'm the main designer. Flip through it like a book, the covers are here now and the
+        inside spreads are going in as they're finished.
+      </p>
+
+      <div class="meta-grid">
+        <div class="cell"><div class="k">Title</div><div class="v">Marga Sutra · 兹路之径</div></div>
+        <div class="cell"><div class="k">For</div><div class="v">Zijing College</div></div>
+        <div class="cell"><div class="k">My role</div><div class="v">Main designer</div></div>
+        <div class="cell"><div class="k">Status</div><div class="v">Covers done · spreads in progress</div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== The book ===== -->
+  <section class="mag-wrap">
+    <div class="book-hint">Drag a page or use the arrows</div>
+    <div class="mag-stage">
+      <div id="book">
+
+        <div class="page page-cover" data-density="hard">
+          <img class="cover-img" src="../assets/img/magazine/cover-front.jpg" alt="Uzbekistan deep dive magazine, front cover" />
+        </div>
+
+        <div class="page">
+          <div class="mag-leaf">
+            <span class="eyebrow2">Marga Sutra · 兹路之径</span>
+            <h2 class="ttl">Uzbekistan Deep Dive</h2>
+            <span class="cn">丝路三城的转型观察</span>
+            <span class="rule"></span>
+            <span class="ln">Tashkent · Samarkand · Bukhara</span>
+            <span class="ln">10 to 20 July 2026</span>
+            <span class="ln small">Team: Jethro · Alif · Farras · Rafi</span>
+            <span class="ln small">Zijing College · Tsinghua University</span>
+            <span class="ln small">Design: Rafi Adifa Maulana</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+
+        <div class="page">
+          <div class="mag-leaf soon">
+            <span class="mark">01</span>
+            <span class="ln">Opening spread coming soon</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+        <div class="page">
+          <div class="mag-leaf soon">
+            <span class="mark">Tashkent</span>
+            <span class="ln">Spread coming soon</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+        <div class="page">
+          <div class="mag-leaf soon">
+            <span class="mark">Samarkand</span>
+            <span class="ln">Spread coming soon</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+        <div class="page">
+          <div class="mag-leaf soon">
+            <span class="mark">Bukhara</span>
+            <span class="ln">Spread coming soon</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+        <div class="page">
+          <div class="mag-leaf soon">
+            <span class="mark">·</span>
+            <span class="ln">Closing spread coming soon</span>
+            <span class="folio">Marga Sutra</span>
+          </div>
+        </div>
+
+        <div class="page page-cover" data-density="hard">
+          <img class="cover-img" src="../assets/img/magazine/cover-back.jpg" alt="Uzbekistan deep dive magazine, back cover" />
+        </div>
+
+      </div>
+    </div>
+
+    <div class="book-controls">
+      <button type="button" class="turn" id="prev" aria-label="Previous page">&lsaquo;</button>
+      <span class="counter" id="counter">Front cover</span>
+      <button type="button" class="turn" id="next" aria-label="Next page">&rsaquo;</button>
+    </div>
+
+    <p class="mag-note">
+      The finished spreads are being added as the magazine is printed. A QR code that opens straight to this book is on the way.
+    </p>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="wrap">
+      <a class="brand" href="../index.html"><b>Rafi</b> <span>// PORTFOLIO</span></a>
+      <span class="small">Marga Sutra &middot; Uzbekistan deep-dive magazine</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script>
+    (function () {
+      var el = document.getElementById('book');
+      var pages = el.querySelectorAll('.page');
+      var total = pages.length;
+      var counter = document.getElementById('counter');
+      var prev = document.getElementById('prev');
+      var next = document.getElementById('next');
+
+      // Stop the page from jumping to the top while a page turns (mobile in-app browsers).
+      var savedY = 0, lockUntil = 0;
+      function getY() { return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
+      function setY(y) { try { window.scrollTo(0, y); } catch (e) {} document.documentElement.scrollTop = y; document.body.scrollTop = y; }
+      function markFlip() { savedY = getY(); lockUntil = Date.now() + 1100; }
+      window.addEventListener('scroll', function () {
+        if (Date.now() < lockUntil && Math.abs(getY() - savedY) > 2) setY(savedY);
+      }, { capture: true, passive: true });
+
+      function labelFor(i) {
+        if (i <= 0) return 'Front cover';
+        if (i >= total - 1) return 'Back cover';
+        return 'page ' + i + ' / ' + (total - 2);
+      }
+
+      if (window.St && St.PageFlip) {
+        var pf = new St.PageFlip(el, {
+          width: 440, height: 622, size: 'stretch',
+          minWidth: 280, maxWidth: 540, minHeight: 396, maxHeight: 764,
+          maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: false, useMouseEvents: true, flippingTime: 700
+        });
+        pf.loadFromHTML(pages);
+        document.body.classList.add('book-ready');
+        function update() {
+          var i = pf.getCurrentPageIndex();
+          counter.textContent = labelFor(i);
+          prev.disabled = (i <= 0);
+          next.disabled = (i >= total - 1);
+        }
+        pf.on('flip', function () { update(); setY(savedY); });
+        el.addEventListener('pointerdown', markFlip, true);
+        el.addEventListener('touchstart', markFlip, { capture: true, passive: true });
+        prev.addEventListener('click', function () { markFlip(); pf.flipPrev(); });
+        next.addEventListener('click', function () { markFlip(); pf.flipNext(); });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowLeft') { markFlip(); pf.flipPrev(); }
+          if (e.key === 'ArrowRight') { markFlip(); pf.flipNext(); }
+        });
+        [prev, next].forEach(function (b) {
+          b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        });
+        update();
+        var rt;
+        window.addEventListener('resize', function () {
+          clearTimeout(rt);
+          rt = setTimeout(function () { var y = getY(); try { pf.update(); } catch (e) {} setY(y); }, 200);
+        });
+      } else {
+        el.classList.add('plain');
+        document.querySelector('.book-controls').style.display = 'none';
+        document.querySelector('.book-hint').textContent = 'Browse the magazine';
+      }
+    })();
+  </script>
+</body>
+</html>
