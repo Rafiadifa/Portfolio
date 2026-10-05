@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/main.css" />
   <style>
+    html, body, #book, #book .page { overflow-anchor: none; }
     .sketch-wrap { position: relative; z-index: 1; padding: 34px 0 20px; }
     .book-hint { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
     .sketch-stage { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 16px; }
@@ -501,21 +502,25 @@
       var chips = Array.prototype.slice.call(document.querySelectorAll('.chip-jump'));
       var slugs = Object.keys(catStart);
 
-      // Keep the page from jumping while a page turns (mobile browsers).
-      // Reacting to scroll events fires too late on phones, so instead pin the
-      // scroll position every animation frame for a short window around each flip.
-      var savedY = 0, pinUntil = 0, pinning = false;
+      // Freeze the page in place while a page turns, so it cannot scroll at all.
+      // This removes the mobile "jump to top" entirely (no bounce). It is the
+      // position:fixed scroll-lock pattern: offsetting the body by the current
+      // scroll amount makes locking and unlocking visually seamless.
+      var savedY = 0, locked = false, unlockTimer = 0;
       function getY() { return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
-      function setY(y) { try { window.scrollTo(0, y); } catch (e) {} document.documentElement.scrollTop = y; document.body.scrollTop = y; }
-      function pinLoop() {
-        if (Date.now() < pinUntil) {
-          if (Math.abs(getY() - savedY) > 1) setY(savedY);
-          requestAnimationFrame(pinLoop);
-        } else { pinning = false; }
+      function lockScroll() {
+        if (!locked) {
+          locked = true; savedY = getY();
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.overflow = 'hidden';
+        }
+        clearTimeout(unlockTimer); unlockTimer = setTimeout(unlockScroll, 1500);
       }
-      function startPin(ms) {
-        savedY = getY(); pinUntil = Date.now() + (ms || 1000);
-        if (!pinning) { pinning = true; requestAnimationFrame(pinLoop); }
+      function unlockScroll() {
+        if (!locked) return; locked = false; clearTimeout(unlockTimer);
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, savedY);
       }
 
       function nextStart(slug) {
@@ -549,22 +554,23 @@
             c.classList.toggle('on', typeof catStart[s] === 'number' && i >= catStart[s] && i < nextStart(s));
           });
         }
-        pf.on('flip', function () { update(); setY(savedY); });
-        // pin as soon as a real page turn begins; changeState fires on a flip,
-        // not on a plain vertical scroll, so scrolling the page still works.
+        pf.on('flip', function () { update(); unlockScroll(); });
+        // lock while a turn is in motion; unlock once it settles back to 'read'.
+        // changeState only fires on an actual fold/flip, never on plain vertical
+        // scrolling, so scrolling the page normally is untouched.
         pf.on('changeState', function (e) {
-          if (e.data === 'user_fold' || e.data === 'flipping') { if (!pinning) startPin(1200); }
+          if (e.data === 'read') unlockScroll(); else lockScroll();
         });
-        prev.addEventListener('click', function () { startPin(1000); pf.flipPrev(); });
-        next.addEventListener('click', function () { startPin(1000); pf.flipNext(); });
+        prev.addEventListener('click', function () { lockScroll(); pf.flipPrev(); });
+        next.addEventListener('click', function () { lockScroll(); pf.flipNext(); });
         document.addEventListener('keydown', function (e) {
-          if (e.key === 'ArrowLeft') { startPin(1000); pf.flipPrev(); }
-          if (e.key === 'ArrowRight') { startPin(1000); pf.flipNext(); }
+          if (e.key === 'ArrowLeft') { lockScroll(); pf.flipPrev(); }
+          if (e.key === 'ArrowRight') { lockScroll(); pf.flipNext(); }
         });
         chips.forEach(function (c) {
           c.addEventListener('click', function () {
             var s = c.getAttribute('data-slug');
-            if (typeof catStart[s] === 'number') { startPin(1000); pf.flip(catStart[s]); }
+            if (typeof catStart[s] === 'number') { lockScroll(); pf.flip(catStart[s]); }
           });
         });
         // don't let a tapped control grab focus and scroll itself into view
