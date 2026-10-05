@@ -501,15 +501,22 @@
       var chips = Array.prototype.slice.call(document.querySelectorAll('.chip-jump'));
       var slugs = Object.keys(catStart);
 
-      // Stop the page from jumping to the top while a page turns (mobile in-app browsers).
-      // Works whether the scroll container is the window or the <body>.
-      var savedY = 0, lockUntil = 0;
+      // Keep the page from jumping while a page turns (mobile browsers).
+      // Reacting to scroll events fires too late on phones, so instead pin the
+      // scroll position every animation frame for a short window around each flip.
+      var savedY = 0, pinUntil = 0, pinning = false;
       function getY() { return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
       function setY(y) { try { window.scrollTo(0, y); } catch (e) {} document.documentElement.scrollTop = y; document.body.scrollTop = y; }
-      function markFlip() { savedY = getY(); lockUntil = Date.now() + 1100; }
-      window.addEventListener('scroll', function () {
-        if (Date.now() < lockUntil && Math.abs(getY() - savedY) > 2) setY(savedY);
-      }, { capture: true, passive: true });
+      function pinLoop() {
+        if (Date.now() < pinUntil) {
+          if (Math.abs(getY() - savedY) > 1) setY(savedY);
+          requestAnimationFrame(pinLoop);
+        } else { pinning = false; }
+      }
+      function startPin(ms) {
+        savedY = getY(); pinUntil = Date.now() + (ms || 1000);
+        if (!pinning) { pinning = true; requestAnimationFrame(pinLoop); }
+      }
 
       function nextStart(slug) {
         var vals = slugs.map(function (s) { return catStart[s]; }).sort(function (a, b) { return a - b; });
@@ -543,19 +550,21 @@
           });
         }
         pf.on('flip', function () { update(); setY(savedY); });
-        // capture the scroll position the instant an interaction begins
-        el.addEventListener('pointerdown', markFlip, true);
-        el.addEventListener('touchstart', markFlip, { capture: true, passive: true });
-        prev.addEventListener('click', function () { markFlip(); pf.flipPrev(); });
-        next.addEventListener('click', function () { markFlip(); pf.flipNext(); });
+        // pin as soon as a real page turn begins; changeState fires on a flip,
+        // not on a plain vertical scroll, so scrolling the page still works.
+        pf.on('changeState', function (e) {
+          if (e.data === 'user_fold' || e.data === 'flipping') { if (!pinning) startPin(1200); }
+        });
+        prev.addEventListener('click', function () { startPin(1000); pf.flipPrev(); });
+        next.addEventListener('click', function () { startPin(1000); pf.flipNext(); });
         document.addEventListener('keydown', function (e) {
-          if (e.key === 'ArrowLeft') { markFlip(); pf.flipPrev(); }
-          if (e.key === 'ArrowRight') { markFlip(); pf.flipNext(); }
+          if (e.key === 'ArrowLeft') { startPin(1000); pf.flipPrev(); }
+          if (e.key === 'ArrowRight') { startPin(1000); pf.flipNext(); }
         });
         chips.forEach(function (c) {
           c.addEventListener('click', function () {
             var s = c.getAttribute('data-slug');
-            if (typeof catStart[s] === 'number') { markFlip(); pf.flip(catStart[s]); }
+            if (typeof catStart[s] === 'number') { startPin(1000); pf.flip(catStart[s]); }
           });
         });
         // don't let a tapped control grab focus and scroll itself into view
