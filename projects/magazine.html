@@ -274,6 +274,12 @@
           if (e.key === 'ArrowRight') { lockScroll(); pf.flipNext(); }
         });
         [prev, next].forEach(function (b) {
+          // Lock on pointerdown/touchstart, BEFORE the tap can move focus and
+          // scroll the page. Locking on click (later) was too late, the jump
+          // had already happened. Capturing the position here also means we
+          // restore to the right spot, not to the top.
+          b.addEventListener('pointerdown', function () { lockScroll(); }, true);
+          b.addEventListener('touchstart', function () { lockScroll(); }, { capture: true, passive: true });
           b.addEventListener('mousedown', function (e) { e.preventDefault(); });
         });
         update();

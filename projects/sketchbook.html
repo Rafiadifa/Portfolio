@@ -575,6 +575,12 @@
         });
         // don't let a tapped control grab focus and scroll itself into view
         [prev, next].concat(chips).forEach(function (b) {
+          // Lock on pointerdown/touchstart, BEFORE the tap can move focus and
+          // scroll the page. Locking on click (later) was too late, the jump
+          // had already happened. Capturing the position here also means we
+          // restore to the right spot, not to the top.
+          b.addEventListener('pointerdown', function () { lockScroll(); }, true);
+          b.addEventListener('touchstart', function () { lockScroll(); }, { capture: true, passive: true });
           b.addEventListener('mousedown', function (e) { e.preventDefault(); });
         });
         update();
