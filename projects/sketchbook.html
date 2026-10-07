@@ -544,8 +544,9 @@
         });
         pf.loadFromHTML(pages);
         document.body.classList.add('book-ready');
-        function update() {
-          var i = pf.getCurrentPageIndex();
+        function update(i) {
+          // the flip event carries the new page; getCurrentPageIndex() lags a step
+          if (typeof i !== 'number') i = pf.getCurrentPageIndex();
           counter.textContent = labelFor(i);
           prev.disabled = (i <= 0);
           next.disabled = (i >= total - 1);
@@ -554,7 +555,7 @@
             c.classList.toggle('on', typeof catStart[s] === 'number' && i >= catStart[s] && i < nextStart(s));
           });
         }
-        pf.on('flip', function () { update(); unlockScroll(); });
+        pf.on('flip', function (e) { update(e.data); unlockScroll(); });
         // lock while a turn is in motion; unlock once it settles back to 'read'.
         // changeState only fires on an actual fold/flip, never on plain vertical
         // scrolling, so scrolling the page normally is untouched.
