@@ -26,7 +26,12 @@
   <link rel="stylesheet" href="../assets/css/main.css" />
   <style>
     html, body, #book, #book .page { overflow-anchor: none; }
-    .mag-wrap { position: relative; z-index: 1; padding: 34px 0 20px; }
+    /* the site scrolls smoothly; here any position correction must be instant */
+    html { scroll-behavior: auto !important; }
+    /* The page being turned (and its shadow) can swing past the edge of the book.
+       If that widens the page, phones shift the scroll - the "jumps up" bug.
+       Clip it here so the document can never get wider than the screen. */
+    .mag-wrap { position: relative; z-index: 1; padding: 34px 0 20px; overflow-x: hidden; overflow-x: clip; }
     .book-hint { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
     .mag-stage { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 16px; }
     #book { margin: 0 auto; touch-action: pan-y; }
@@ -54,11 +59,37 @@
     .mag-leaf.soon .mark { font-family: "Playfair Display", serif; font-size: 40px; color: #d8c6e4; line-height: 1; }
     .mag-leaf.soon .ln { margin-top: 14px; color: #8a7e96; }
 
-    .book-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 26px auto 0; }
-    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; transition: transform .12s, border-color .15s, background .15s; }
+    .book-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 22px auto 0; }
+    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; touch-action: manipulation; transition: transform .12s, border-color .15s, background .15s; }
     .book-controls button.turn:hover { border-color: var(--accent-2); background: var(--surface-2); transform: translateY(-2px); }
     .book-controls button.turn:disabled { opacity: 0.3; cursor: default; transform: none; }
-    .book-controls .counter { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); min-width: 170px; text-align: center; }
+    .book-controls .counter { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); min-width: 190px; text-align: center; }
+
+    .book-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin: 16px auto 0; padding: 0 16px; }
+    .tool, .seg, .goto { height: 38px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 12.5px; }
+    .tool { display: inline-flex; align-items: center; gap: 8px; padding: 0 15px; cursor: pointer; text-decoration: none; touch-action: manipulation; transition: color .15s, border-color .15s; }
+    .tool:hover { color: var(--text); border-color: var(--accent-2); }
+    .tool svg, .goto svg { width: 15px; height: 15px; flex: none; }
+    .seg { display: inline-flex; padding: 3px; gap: 2px; }
+    .seg button { border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 12.5px; padding: 0 13px; cursor: pointer; touch-action: manipulation; }
+    .seg button.on { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--accent-2); }
+    .goto { display: inline-flex; align-items: center; gap: 8px; padding: 0 4px 0 14px; }
+    .goto input { width: 50px; height: 28px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: 12.5px var(--mono); text-align: center; -moz-appearance: textfield; }
+    .goto input::-webkit-outer-spin-button, .goto input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .goto input.bad { border-color: #d65f6f; }
+    .goto button { height: 30px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--accent-2); color: #fff; font-size: 12px; cursor: pointer; touch-action: manipulation; }
+
+    /* full screen: real Fullscreen API, or a fixed overlay where it isn't supported (iPhone) */
+    .mag-wrap:fullscreen, .mag-wrap:-webkit-full-screen, .mag-wrap.is-full {
+      position: fixed; inset: 0; z-index: 2000; margin: 0; padding: 14px 0 14px; background: var(--bg);
+      display: flex; flex-direction: column; justify-content: center; overflow: auto; }
+    .mag-wrap:fullscreen .book-hint, .mag-wrap:fullscreen .mag-note,
+    .mag-wrap:-webkit-full-screen .book-hint, .mag-wrap:-webkit-full-screen .mag-note,
+    .mag-wrap.is-full .book-hint, .mag-wrap.is-full .mag-note { display: none; }
+    .mag-wrap:fullscreen .mag-stage, .mag-wrap:-webkit-full-screen .mag-stage, .mag-wrap.is-full .mag-stage { max-width: none; }
+    .mag-wrap:fullscreen .book-controls, .mag-wrap:-webkit-full-screen .book-controls, .mag-wrap.is-full .book-controls { margin-top: 14px; }
+    .mag-wrap:fullscreen .book-tools, .mag-wrap:-webkit-full-screen .book-tools, .mag-wrap.is-full .book-tools { margin-top: 10px; }
+    html.mag-lock, html.mag-lock body { overflow: hidden; }
 
     .mag-note { max-width: 560px; margin: 24px auto 0; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
 
@@ -193,8 +224,28 @@
 
     <div class="book-controls">
       <button type="button" class="turn" id="prev" aria-label="Previous page">&lsaquo;</button>
-      <span class="counter" id="counter">Front cover</span>
+      <span class="counter" id="counter" aria-live="polite">Front cover</span>
       <button type="button" class="turn" id="next" aria-label="Next page">&rsaquo;</button>
+    </div>
+
+    <div class="book-tools">
+      <form class="goto" id="goto" novalidate>
+        <label for="goto-n">Go to page</label>
+        <input id="goto-n" type="number" inputmode="numeric" min="1" max="52" placeholder="1&ndash;52" aria-label="Page number, 1 to 52" />
+        <button type="submit">Go</button>
+      </form>
+      <div class="seg" role="group" aria-label="Pages shown">
+        <button type="button" data-mode="one" aria-pressed="false">1 page</button>
+        <button type="button" data-mode="two" aria-pressed="false">2 pages</button>
+      </div>
+      <button type="button" class="tool" id="fs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        <span>Full screen</span>
+      </button>
+      <a class="tool" href="../assets/docs/Marga-Sutra_Uzbekistan-Deep-Dive-Magazine.pdf" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        <span>Download PDF &middot; 18 MB</span>
+      </a>
     </div>
 
     <p class="mag-note">
@@ -215,34 +266,59 @@
   <script>
     (function () {
       var el = document.getElementById('book');
+      var wrap = document.querySelector('.mag-wrap');
+      var stage = document.querySelector('.mag-stage');
       var pages = el.querySelectorAll('.page');
       var total = pages.length;
+      var PRINTED = total - 4;               // covers + inside covers carry no page number
+      var RATIO = 440 / 622;                 // page width / height
       var counter = document.getElementById('counter');
       var prev = document.getElementById('prev');
       var next = document.getElementById('next');
+      var fsBtn = document.getElementById('fs');
+      var segBtns = Array.prototype.slice.call(document.querySelectorAll('.seg button'));
+      var gotoForm = document.getElementById('goto');
+      var gotoInput = document.getElementById('goto-n');
+      var pf = null;
 
-      // Freeze the page in place while a page turns, so it cannot scroll at all.
-      // This removes the mobile "jump to top" entirely (no bounce). It is the
-      // position:fixed scroll-lock pattern: offsetting the body by the current
-      // scroll amount makes locking and unlocking visually seamless.
-      var savedY = 0, locked = false, unlockTimer = 0;
-      function getY() { return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
-      function lockScroll() {
-        if (!locked) {
-          locked = true; savedY = getY();
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.overflow = 'hidden';
-        }
-        clearTimeout(unlockTimer); unlockTimer = setTimeout(unlockScroll, 1500);
+      // ---------- scroll guard ----------
+      // Nothing about turning a page should move the page you're reading.
+      // While a turn is happening, any scroll the user didn't make is put back
+      // instantly (scroll-behavior is 'auto' here, so the fix lands before the
+      // next paint and never shows). Anything the user does to scroll - wheel,
+      // keys, dragging outside the book - cancels the guard straight away.
+      var guardY = 0, guardUntil = 0, raf = 0;
+      function y() { return window.pageYOffset || document.documentElement.scrollTop || 0; }
+      function pin() {
+        var now = Date.now();
+        if (now >= guardUntil || isFull()) return false;
+        if (pf && pf.getState() !== 'read') guardUntil = Math.max(guardUntil, now + 300);
+        if (Math.abs(y() - guardY) > 1) window.scrollTo(0, guardY);
+        return true;
       }
-      function unlockScroll() {
-        if (!locked) return; locked = false; clearTimeout(unlockTimer);
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, savedY);
+      // check on every frame too: phones can apply a pending scroll a frame
+      // later, after the scroll event already ran. Frames run before paint.
+      function loop() { raf = pin() ? requestAnimationFrame(loop) : 0; }
+      function hold(ms) {
+        var now = Date.now();
+        if (now >= guardUntil) guardY = y();
+        guardUntil = Math.max(guardUntil, now + ms);
+        if (!raf) raf = requestAnimationFrame(loop);
       }
+      function release() { guardUntil = 0; }
+      window.addEventListener('scroll', pin, { passive: true });
+      window.addEventListener('wheel', release, { passive: true });
+      // a finger that started on the book is turning a page, not scrolling
+      var bookTouch = false;
+      el.addEventListener('touchstart', function () { bookTouch = true; }, { capture: true, passive: true });
+      window.addEventListener('touchend', function () { bookTouch = false; }, { passive: true });
+      window.addEventListener('touchcancel', function () { bookTouch = false; }, { passive: true });
+      window.addEventListener('touchmove', function () { if (!bookTouch) release(); }, { passive: true });
+      document.addEventListener('keydown', function (e) {
+        if (/^(PageUp|PageDown|Home|End|ArrowUp|ArrowDown| )$/.test(e.key)) release();
+      });
 
-      // printed page number for a book index (covers and inside covers have none)
+      // ---------- labels ----------
       function num(k) {
         if (k <= 0 || k >= total - 1) return null;
         if (k === 1 || k === total - 2) return 'inside cover';
@@ -251,59 +327,167 @@
       function labelFor(i) {
         if (i <= 0) return 'Front cover';
         if (i >= total - 1) return 'Back cover';
-        var spread = window.St && pf && pf.getOrientation && pf.getOrientation() === 'landscape';
+        var spread = pf && pf.getOrientation() === 'landscape';
         var a = num(i), b = spread ? num(i + 1) : null;
-        if (b === null || b === undefined) return typeof a === 'number' ? 'page ' + a + ' / ' + (total - 4) : 'Inside cover';
-        if (typeof a === 'number' && typeof b === 'number') return 'pages ' + a + '–' + b + ' / ' + (total - 4);
+        if (b === null || b === undefined) return typeof a === 'number' ? 'page ' + a + ' / ' + PRINTED : 'Inside cover';
+        if (typeof a === 'number' && typeof b === 'number') return 'pages ' + a + '–' + b + ' / ' + PRINTED;
         return (typeof a === 'number' ? 'page ' + a : 'Inside cover') + ' · ' + (typeof b === 'number' ? 'page ' + b : 'inside cover');
       }
 
+      // ---------- full screen ----------
+      // full screen lifts the book out of the page, so the page behind gets
+      // shorter and the browser clamps the scroll. Remember where the reader
+      // was and put them back after the book has resized on the way out.
+      var fsY = 0;
+      function isFull() {
+        return document.fullscreenElement === wrap || document.webkitFullscreenElement === wrap || wrap.classList.contains('is-full');
+      }
+      function pseudoOn() {
+        wrap.classList.add('is-full');
+        document.documentElement.classList.add('mag-lock');
+        afterFs();
+      }
+      function pseudoOff() {
+        wrap.classList.remove('is-full');
+        document.documentElement.classList.remove('mag-lock');
+        afterFs();
+      }
+      function enterFs() {
+        fsY = y();
+        release();
+        var req = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+        if (!req) return pseudoOn();
+        try {
+          var r = req.call(wrap);
+          if (r && r.catch) r.catch(pseudoOn);
+        } catch (err) { pseudoOn(); }
+      }
+      function exitFs() {
+        if (wrap.classList.contains('is-full')) return pseudoOff();
+        var ex = document.exitFullscreen || document.webkitExitFullscreen;
+        if (ex) ex.call(document);
+      }
+      function afterFs() {
+        fsBtn.querySelector('span').textContent = isFull() ? 'Exit full screen' : 'Full screen';
+        release();
+        setTimeout(function () {
+          fit();
+          if (!isFull()) { release(); window.scrollTo(0, fsY); }
+        }, 80);
+      }
+      fsBtn.addEventListener('click', function () { isFull() ? exitFs() : enterFs(); });
+      document.addEventListener('fullscreenchange', afterFs);
+      document.addEventListener('webkitfullscreenchange', afterFs);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && wrap.classList.contains('is-full')) pseudoOff();
+      });
+
+      // ---------- one page / two pages + fit to screen ----------
+      var mode = null;
+      try { mode = localStorage.getItem('mag-mode'); } catch (err) {}
+      if (mode !== 'one' && mode !== 'two') mode = (stage.clientWidth >= 720) ? 'two' : 'one';
+      function fit() {
+        if (!pf) return;
+        // pf.update() re-shows the current page and would cancel a turn in progress
+        if (pf.getState() !== 'read') { setTimeout(fit, 250); return; }
+        var full = isFull();
+        var stageW = stage.clientWidth - 32;
+        // leave room for the sticky nav, the hint and the controls under the book
+        var h = window.innerHeight - (full ? 150 : 64 + 210);
+        h = Math.max(h, 320);
+        var two = (mode === 'two');
+        var pageW = Math.floor(Math.min(two ? stageW / 2 : stageW, h * RATIO));
+        var st = pf.getSettings();
+        st.minWidth = two ? 60 : 100000;      // forces the spread or the single page
+        st.maxWidth = 4000;
+        el.style.minWidth = '0px';
+        el.style.minHeight = '0px';
+        el.style.maxWidth = (two ? pageW * 2 : pageW) + 'px';
+        try { pf.update(); } catch (err) {}
+        update();
+      }
+      function setMode(m) {
+        mode = m;
+        try { localStorage.setItem('mag-mode', m); } catch (err) {}
+        segBtns.forEach(function (b) {
+          var on = b.getAttribute('data-mode') === m;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        fit();
+      }
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+      });
+
+      // ---------- go to page ----------
+      gotoForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var n = parseInt(gotoInput.value, 10);
+        if (!(n >= 1 && n <= PRINTED)) {
+          gotoInput.classList.add('bad');
+          setTimeout(function () { gotoInput.classList.remove('bad'); }, 900);
+          return;
+        }
+        gotoInput.blur();
+        hold(1500);
+        pf.flip(n + 1);                      // printed page n lives at book index n+1
+      });
+
+      function update(i) {
+        if (!pf) return;
+        if (typeof i !== 'number') i = pf.getCurrentPageIndex();   // the flip event is more current than this
+        counter.textContent = labelFor(i);
+        prev.disabled = (i <= 0);
+        next.disabled = (i >= total - 1);
+      }
+
       if (window.St && St.PageFlip) {
-        var pf = new St.PageFlip(el, {
+        pf = new St.PageFlip(el, {
           width: 440, height: 622, size: 'stretch',
           minWidth: 280, maxWidth: 540, minHeight: 396, maxHeight: 764,
           maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: false, useMouseEvents: true, flippingTime: 700
         });
         pf.loadFromHTML(pages);
         document.body.classList.add('book-ready');
-        function update(i) {
-          // the flip event carries the new page; getCurrentPageIndex() lags a step
-          if (typeof i !== 'number') i = pf.getCurrentPageIndex();
-          counter.textContent = labelFor(i);
-          prev.disabled = (i <= 0);
-          next.disabled = (i >= total - 1);
-        }
-        pf.on('flip', function (e) { update(e.data); unlockScroll(); });
-        // lock while a turn is in motion; unlock once it settles back to 'read'.
-        // changeState only fires on an actual fold/flip, never on plain vertical
-        // scrolling, so scrolling the page normally is untouched.
-        pf.on('changeState', function (e) {
-          if (e.data === 'read') unlockScroll(); else lockScroll();
-        });
-        prev.addEventListener('click', function () { lockScroll(); pf.flipPrev(); });
-        next.addEventListener('click', function () { lockScroll(); pf.flipNext(); });
-        document.addEventListener('keydown', function (e) {
-          if (e.key === 'ArrowLeft') { lockScroll(); pf.flipPrev(); }
-          if (e.key === 'ArrowRight') { lockScroll(); pf.flipNext(); }
-        });
+
+        pf.on('flip', function (e) { hold(300); update(e.data); });
+        pf.on('changeState', function (e) { hold(e.data === 'read' ? 300 : 1300); });
+        pf.on('changeOrientation', function () { update(); });
+
+        prev.addEventListener('click', function () { hold(500); pf.flipPrev(); });
+        next.addEventListener('click', function () { hold(500); pf.flipNext(); });
         [prev, next].forEach(function (b) {
-          // Lock on pointerdown/touchstart, BEFORE the tap can move focus and
-          // scroll the page. Locking on click (later) was too late, the jump
-          // had already happened. Capturing the position here also means we
-          // restore to the right spot, not to the top.
-          b.addEventListener('pointerdown', function () { lockScroll(); }, true);
-          b.addEventListener('touchstart', function () { lockScroll(); }, { capture: true, passive: true });
+          b.addEventListener('pointerdown', function () { hold(500); }, true);
+          b.addEventListener('touchstart', function () { hold(500); }, { capture: true, passive: true });
           b.addEventListener('mousedown', function (e) { e.preventDefault(); });
         });
-        update();
-        var rt;
+        el.addEventListener('pointerdown', function () { hold(800); }, true);
+        el.addEventListener('touchstart', function () { hold(800); }, { capture: true, passive: true });
+        document.addEventListener('keydown', function (e) {
+          if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+          if (e.key === 'ArrowLeft') { hold(500); pf.flipPrev(); }
+          if (e.key === 'ArrowRight') { hold(500); pf.flipNext(); }
+        });
+
+        setMode(mode);
+        // phones fire resize as the address bar slides; ignore those small
+        // height-only changes so the book doesn't shift while you scroll
+        var rt, lastW = window.innerWidth, lastH = window.innerHeight;
         window.addEventListener('resize', function () {
           clearTimeout(rt);
-          rt = setTimeout(function () { var y = getY(); try { pf.update(); } catch (e) {} setY(y); }, 200);
+          rt = setTimeout(function () {
+            var w = window.innerWidth, h = window.innerHeight;
+            if (!isFull() && w === lastW && Math.abs(h - lastH) < 150) return;
+            lastW = w; lastH = h; fit();
+          }, 150);
         });
       } else {
         el.classList.add('plain');
         document.querySelector('.book-controls').style.display = 'none';
+        document.querySelector('.goto').style.display = 'none';
+        document.querySelector('.seg').style.display = 'none';
+        fsBtn.style.display = 'none';
         document.querySelector('.book-hint').textContent = 'Browse the magazine';
       }
     })();

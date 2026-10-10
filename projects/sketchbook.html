@@ -26,7 +26,11 @@
   <link rel="stylesheet" href="../assets/css/main.css" />
   <style>
     html, body, #book, #book .page { overflow-anchor: none; }
-    .sketch-wrap { position: relative; z-index: 1; padding: 34px 0 20px; }
+    /* the site scrolls smoothly; here any position correction must be instant */
+    html { scroll-behavior: auto !important; }
+    /* The page being turned can swing past the edge of the book; if that widens
+       the page, phones shift the scroll. Clip it so the page never gets wider. */
+    .sketch-wrap { position: relative; z-index: 1; padding: 34px 0 20px; overflow-x: hidden; overflow-x: clip; }
     .book-hint { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
     .sketch-stage { width: 100%; max-width: 1040px; margin: 0 auto; padding: 0 16px; }
     #book { margin: 0 auto; touch-action: pan-y; }
@@ -48,12 +52,12 @@
     .cover-sub { font-size: 13.5px; color: #d9c9e2; max-width: 240px; line-height: 1.5; }
     .cover-link { margin-top: 18px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: #e6c8f5; border: 1px solid rgba(230,200,245,0.4); border-radius: 999px; padding: 8px 16px; }
     .book-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 26px auto 0; }
-    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; transition: transform .12s, border-color .15s, background .15s; }
+    .book-controls button.turn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; touch-action: manipulation; transition: transform .12s, border-color .15s, background .15s; }
     .book-controls button.turn:hover { border-color: var(--accent-2); background: var(--surface-2); transform: translateY(-2px); }
     .book-controls button.turn:disabled { opacity: 0.3; cursor: default; transform: none; }
     .book-controls .counter { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--muted); min-width: 180px; text-align: center; }
     .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 22px auto 0; max-width: 640px; }
-    .chip-jump { font-size: 12.5px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
+    .chip-jump { font-size: 12.5px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; touch-action: manipulation; transition: color .15s, border-color .15s; }
     .chip-jump:hover, .chip-jump.on { color: var(--text); border-color: var(--accent-2); }
     #book.plain { position: static !important; width: 100% !important; height: auto !important; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; transform: none !important; perspective: none !important; }
     #book.plain .page { position: relative !important; display: block !important; width: auto !important; height: auto !important; aspect-ratio: 3/4; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transform: none !important; }
@@ -502,26 +506,41 @@
       var chips = Array.prototype.slice.call(document.querySelectorAll('.chip-jump'));
       var slugs = Object.keys(catStart);
 
-      // Freeze the page in place while a page turns, so it cannot scroll at all.
-      // This removes the mobile "jump to top" entirely (no bounce). It is the
-      // position:fixed scroll-lock pattern: offsetting the body by the current
-      // scroll amount makes locking and unlocking visually seamless.
-      var savedY = 0, locked = false, unlockTimer = 0;
-      function getY() { return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
-      function lockScroll() {
-        if (!locked) {
-          locked = true; savedY = getY();
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.overflow = 'hidden';
-        }
-        clearTimeout(unlockTimer); unlockTimer = setTimeout(unlockScroll, 1500);
+      var pf = null;
+      // ---------- scroll guard ----------
+      // Nothing about turning a page should move the page you're reading. While
+      // a turn is happening, any scroll the user didn't make is put back on the
+      // same frame (scroll-behavior is 'auto' here, so it never shows). Anything
+      // the user does to scroll - wheel, keys, dragging outside the book -
+      // cancels the guard straight away.
+      var guardY = 0, guardUntil = 0, raf = 0;
+      function y() { return window.pageYOffset || document.documentElement.scrollTop || 0; }
+      function pin() {
+        var now = Date.now();
+        if (now >= guardUntil) return false;
+        if (pf && pf.getState() !== 'read') guardUntil = Math.max(guardUntil, now + 300);
+        if (Math.abs(y() - guardY) > 1) window.scrollTo(0, guardY);
+        return true;
       }
-      function unlockScroll() {
-        if (!locked) return; locked = false; clearTimeout(unlockTimer);
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, savedY);
+      // check every frame too: phones can apply a pending scroll a frame late
+      function loop() { raf = pin() ? requestAnimationFrame(loop) : 0; }
+      function hold(ms) {
+        var now = Date.now();
+        if (now >= guardUntil) guardY = y();
+        guardUntil = Math.max(guardUntil, now + ms);
+        if (!raf) raf = requestAnimationFrame(loop);
       }
+      function release() { guardUntil = 0; }
+      window.addEventListener('scroll', pin, { passive: true });
+      window.addEventListener('wheel', release, { passive: true });
+      var bookTouch = false;
+      el.addEventListener('touchstart', function () { bookTouch = true; }, { capture: true, passive: true });
+      window.addEventListener('touchend', function () { bookTouch = false; }, { passive: true });
+      window.addEventListener('touchcancel', function () { bookTouch = false; }, { passive: true });
+      window.addEventListener('touchmove', function () { if (!bookTouch) release(); }, { passive: true });
+      document.addEventListener('keydown', function (e) {
+        if (/^(PageUp|PageDown|Home|End|ArrowUp|ArrowDown| )$/.test(e.key)) release();
+      });
 
       function nextStart(slug) {
         var vals = slugs.map(function (s) { return catStart[s]; }).sort(function (a, b) { return a - b; });
@@ -537,7 +556,7 @@
       }
 
       if (window.St && St.PageFlip) {
-        var pf = new St.PageFlip(el, {
+        pf = new St.PageFlip(el, {
           width: 460, height: 620, size: 'stretch',
           minWidth: 280, maxWidth: 560, minHeight: 360, maxHeight: 700,
           maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: false, useMouseEvents: true, flippingTime: 700
@@ -555,41 +574,41 @@
             c.classList.toggle('on', typeof catStart[s] === 'number' && i >= catStart[s] && i < nextStart(s));
           });
         }
-        pf.on('flip', function (e) { update(e.data); unlockScroll(); });
-        // lock while a turn is in motion; unlock once it settles back to 'read'.
-        // changeState only fires on an actual fold/flip, never on plain vertical
-        // scrolling, so scrolling the page normally is untouched.
-        pf.on('changeState', function (e) {
-          if (e.data === 'read') unlockScroll(); else lockScroll();
-        });
-        prev.addEventListener('click', function () { lockScroll(); pf.flipPrev(); });
-        next.addEventListener('click', function () { lockScroll(); pf.flipNext(); });
+        pf.on('flip', function (e) { hold(300); update(e.data); });
+        pf.on('changeState', function (e) { hold(e.data === 'read' ? 300 : 1300); });
+        prev.addEventListener('click', function () { hold(500); pf.flipPrev(); });
+        next.addEventListener('click', function () { hold(500); pf.flipNext(); });
         document.addEventListener('keydown', function (e) {
-          if (e.key === 'ArrowLeft') { lockScroll(); pf.flipPrev(); }
-          if (e.key === 'ArrowRight') { lockScroll(); pf.flipNext(); }
+          if (e.key === 'ArrowLeft') { hold(500); pf.flipPrev(); }
+          if (e.key === 'ArrowRight') { hold(500); pf.flipNext(); }
         });
         chips.forEach(function (c) {
           c.addEventListener('click', function () {
             var s = c.getAttribute('data-slug');
-            if (typeof catStart[s] === 'number') { lockScroll(); pf.flip(catStart[s]); }
+            if (typeof catStart[s] === 'number') { hold(1500); pf.flip(catStart[s]); }
           });
         });
-        // don't let a tapped control grab focus and scroll itself into view
+        // arm the guard the instant a control is touched, before any focus/scroll
         [prev, next].concat(chips).forEach(function (b) {
-          // Lock on pointerdown/touchstart, BEFORE the tap can move focus and
-          // scroll the page. Locking on click (later) was too late, the jump
-          // had already happened. Capturing the position here also means we
-          // restore to the right spot, not to the top.
-          b.addEventListener('pointerdown', function () { lockScroll(); }, true);
-          b.addEventListener('touchstart', function () { lockScroll(); }, { capture: true, passive: true });
+          b.addEventListener('pointerdown', function () { hold(500); }, true);
+          b.addEventListener('touchstart', function () { hold(500); }, { capture: true, passive: true });
           b.addEventListener('mousedown', function (e) { e.preventDefault(); });
         });
+        el.addEventListener('pointerdown', function () { hold(800); }, true);
+        el.addEventListener('touchstart', function () { hold(800); }, { capture: true, passive: true });
         update();
-        var rt;
-        window.addEventListener('resize', function () {
-          clearTimeout(rt);
-          rt = setTimeout(function () { var y = getY(); try { pf.update(); } catch (e) {} setY(y); }, 200);
-        });
+        // pf.update() re-shows the current page, which would cancel a turn in
+        // progress. Phones fire resize as the address bar slides, so skip those
+        // small height-only changes and never update mid-turn.
+        var rt, lastW = window.innerWidth, lastH = window.innerHeight;
+        function onResize() {
+          if (pf.getState() !== 'read') { rt = setTimeout(onResize, 250); return; }
+          var w = window.innerWidth, h = window.innerHeight;
+          if (w === lastW && Math.abs(h - lastH) < 150) return;
+          lastW = w; lastH = h;
+          try { pf.update(); } catch (e) {}
+        }
+        window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(onResize, 200); });
       } else {
         el.classList.add('plain');
         document.querySelector('.book-controls').style.display = 'none';
